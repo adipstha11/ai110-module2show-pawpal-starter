@@ -64,21 +64,32 @@ Scheduling conflicts:
 - Conflict: 'Brush fur' and 'Play with laser pointer' are both scheduled at 09:00.
 ```
 
-## 🧪 Testing PawPal+
+## Testing PawPal+
+
+Run the automated test suite with:
 
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
+
+The tests cover:
+
+- Task completion
+- Adding tasks to a pet
+- Sorting tasks by time
+- Recurring task behavior
+- Conflict detection
+- Empty scheduler edge case
 
 Sample test output:
 
 ```
 # Paste your pytest output here
 ```
+
+### Confidence level: ⭐⭐⭐⭐☆ (4/5)
+
+The system is reliable for all the behaviors covered above — sorting, filtering, recurrence, and the empty-scheduler edge case all pass consistently. The one point held back is conflict detection: it currently only flags tasks that share an exact `scheduled_time` match, so it won't catch overlapping-duration conflicts (e.g., a 30-minute task starting at 08:00 overlapping one that starts at 08:15). That's a reasonable next improvement rather than a current defect.
 
 ## 📐 Smarter Scheduling
 
