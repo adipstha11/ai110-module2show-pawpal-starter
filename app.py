@@ -1,5 +1,7 @@
 import streamlit as st
 
+from pawpal_system import Task, Scheduler
+
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
 st.title("🐾 PawPal+")
@@ -57,9 +59,21 @@ with col2:
 with col3:
     priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
 
+scheduled_time = st.text_input("Time (HH:MM)", value="08:00")
+recurrence = st.selectbox("Recurrence", ["none", "daily", "weekly"])
+completed = st.checkbox("Completed", value=False)
+
 if st.button("Add task"):
     st.session_state.tasks.append(
-        {"title": task_title, "duration_minutes": int(duration), "priority": priority}
+        {
+            "title": task_title,
+            "duration_minutes": int(duration),
+            "priority": priority,
+            "scheduled_time": scheduled_time,
+            "pet_name": pet_name,
+            "completed": completed,
+            "recurrence": recurrence,
+        }
     )
 
 if st.session_state.tasks:
@@ -71,18 +85,53 @@ else:
 st.divider()
 
 st.subheader("Build Schedule")
-st.caption("This button should call your scheduling logic once you implement it.")
+st.caption("Generates a schedule from your saved tasks using the Scheduler backend.")
 
 if st.button("Generate schedule"):
-    st.warning(
-        "Not implemented yet. Next step: create your scheduling logic (classes/functions) and call it here."
-    )
-    st.markdown(
-        """
-Suggested approach:
-1. Design your UML (draft).
-2. Create class stubs (no logic).
-3. Implement scheduling behavior.
-4. Connect your scheduler here and display results.
-"""
-    )
+    if not st.session_state.tasks:
+        st.info("No tasks yet. Add one above.")
+    else:
+        tasks = [
+            Task(
+                title=t["title"],
+                duration_minutes=t["duration_minutes"],
+                priority=t["priority"],
+                scheduled_time=t["scheduled_time"],
+                pet_name=t["pet_name"],
+                recurrence=t["recurrence"],
+            )
+            for t in st.session_state.tasks
+        ]
+        for task, saved in zip(tasks, st.session_state.tasks):
+            if saved["completed"]:
+                task.mark_complete()
+
+        scheduler = Scheduler(tasks=tasks)
+
+        st.markdown("#### Schedule (sorted by time)")
+        for task in scheduler.sort_by_time():
+            st.write(f"- {task.scheduled_time}: {task.describe_task()}")
+
+        st.markdown("#### Pending tasks")
+        pending = scheduler.filter_by_status(False)
+        if pending:
+            for task in pending:
+                st.write(f"- {task.describe_task()}")
+        else:
+            st.write("None")
+
+        st.markdown("#### Completed tasks")
+        done = scheduler.filter_by_status(True)
+        if done:
+            for task in done:
+                st.write(f"- {task.describe_task()}")
+        else:
+            st.write("None")
+
+        st.markdown("#### Scheduling conflicts")
+        conflicts = scheduler.find_conflicts()
+        if conflicts:
+            for warning in conflicts:
+                st.warning(warning)
+        else:
+            st.write("No conflicts found.")
